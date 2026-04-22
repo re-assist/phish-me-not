@@ -1,0 +1,34 @@
+# dependencies
+node_modules/
+
+# env files (IMPORTANT)
+.env
+.env.*
+
+# logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# build outputs
+dist/
+dist-ssr/
+build/
+
+# local config
+*.local
+
+# editor/system
+.vscode/
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
