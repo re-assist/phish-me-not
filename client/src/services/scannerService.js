@@ -1,4 +1,12 @@
-// 1. Move the constants here. They belong to the business logic, not the UI.
+/**
+ * scannerService.js
+ * * This file handles all data fetching and logic for the scanners.
+ * * IMPORTANT: Ensure your Express server is running on localhost:5000 
+ * before testing the URL scanner.
+ */
+
+// We keep the mock data here for the Text and Email scanners 
+// until we build backend routes for them.
 const MOCK_BREACHES = {
   "test@gmail.com": ["LinkedIn (2016)", "Adobe (2013)", "MySpace (2008)"],
   "admin@company.com": ["Canva (2019)", "Dropbox (2012)"],
@@ -12,35 +20,46 @@ const HEURISTIC_KEYWORDS = {
   threat: ["legal action", "arrest", "lawsuit", "deleted", "expired"]
 };
 
+const API_BASE_URL = 'http://localhost:5000/api';
+
+/**
+ * Sends the URL to the Express backend for analysis against OpenPhish and server-side heuristics.
+ */
 export const analyzeURL = async (url) => {
   if (!url) throw new Error("URL is required");
-  await new Promise(r => setTimeout(r, 1000));
-  let score = 0;
-  const flags = [];
-  const lowerUrl = url.toLowerCase();
 
-  if (url.length > 75) { score += 20; flags.push("Unusually long URL (often used to hide actual domain)"); }
-  if (/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/.test(url)) { score += 40; flags.push("IP-based URL detected (legitimate sites use domains)"); }
-  
-  const brandCheck = ["google", "paypal", "microsoft", "apple", "amazon", "netflix"];
-  brandCheck.forEach(brand => {
-    if (lowerUrl.includes(brand) && !url.includes(`${brand}.com`) && !url.includes(`${brand}.org`)) {
-      score += 35;
-      flags.push(`Suspicious use of '${brand}' in non-official domain string`);
+  try {
+    const response = await fetch(`${API_BASE_URL}/scan/url`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ url })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Server responded with status: ${response.status}`);
     }
-  });
 
-  const risk = score >= 60 ? "HIGH" : score >= 30 ? "MEDIUM" : "LOW";
-  return {
-    type: 'URL',
-    input: url,
-    risk,
-    score,
-    explanation: flags.length > 0 ? flags : ["No immediate heuristic red flags detected."],
-    recommendation: risk === "HIGH" ? "Do not click. Report this link." : "Proceed with caution."
-  };
+    return await response.json();
+  } catch (error) {
+    console.error("Error communicating with backend:", error);
+    
+    // Fallback response if the backend is down during the demo
+    return {
+      type: 'URL',
+      input: url,
+      risk: 'ERROR',
+      score: 0,
+      explanation: ["Failed to reach the threat intelligence server.", error.message],
+      recommendation: "Please ensure the backend server is running."
+    };
+  }
 };
 
+/**
+ * Local heuristic analysis for text (will move to backend later)
+ */
 export const analyzeTextContent = async (text) => {
   if (!text) throw new Error("Text is required");
   await new Promise(r => setTimeout(r, 1200));
@@ -69,6 +88,9 @@ export const analyzeTextContent = async (text) => {
   };
 };
 
+/**
+ * Local mock lookup for email breaches (will move to backend later)
+ */
 export const checkEmailBreach = async (email) => {
   if (!email) throw new Error("Email is required");
   await new Promise(r => setTimeout(r, 500)); 
