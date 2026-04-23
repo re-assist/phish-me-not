@@ -1,11 +1,8 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 import { 
   ShieldCheck, 
   ShieldAlert, 
-  ShieldQuestion, 
-  Link2, 
-  MessageSquare, 
-  Mail,   
+  ShieldQuestion,    
   AlertTriangle,
   ChevronRight,
   Info,
@@ -15,6 +12,7 @@ import {
   Zap,
   Loader2
 } from 'lucide-react';
+import ScannerTab from '../components/scanner/ScannerTabs';
 
 const MOCK_BREACHES = {
   "test@gmail.com": ["LinkedIn (2016)", "Adobe (2013)", "MySpace (2008)"],
@@ -126,44 +124,29 @@ const Dashboard = () => {
     setResults(result);
   };
 
-  return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      {/* Container is now a simple vertical stack */}
+   return (
+    <div className="space-y-8 animate-in fade-in duration-500 w-full">
       <div className="space-y-6">
+        {/* Main Scanner Section */}
         <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          <nav className="flex border-b border-slate-100">
-            {['url', 'text', 'email'].map((tab) => (
-              <button 
-                key={tab}
-                onClick={() => {setActiveTab(tab); setResults(null);}}
-                className={`flex-1 py-4 px-4 flex items-center justify-center gap-2 transition-all font-medium ${
-                  activeTab === tab 
-                    ? 'bg-indigo-50 text-indigo-700 border-b-2 border-indigo-600' 
-                    : 'text-slate-500 hover:bg-slate-50'
-                }`}
-              >
-                {tab === 'url' ? <Link2 size={18} /> : tab === 'text' ? <MessageSquare size={18} /> : <Mail size={18} />}
-                <span className="capitalize">{tab} Scanner</span>
-              </button>
-            ))}
-          </nav>
+           <ScannerTab activeTab={activeTab} onTabChange={(tab) => { setActiveTab(tab); setResults(null); }} />
 
-          <div className="p-6">
+          <div className="p-8">
             {activeTab === 'url' && (
               <div className="space-y-4">
-                <div className="flex gap-2">
+                <div className="flex gap-4">
                   <input 
                     type="text" 
                     placeholder="https://g00gle-security.com"
-                    className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                    className="flex-1 px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-lg"
                     id="urlInput"
                   />
                   <button 
                     onClick={() => analyzeURL(document.getElementById('urlInput').value)}
                     disabled={loading}
-                    className="px-8 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center gap-2"
+                    className="px-10 py-4 bg-indigo-600 text-white font-bold text-lg rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center gap-2"
                   >
-                    {loading ? <Loader2 className="animate-spin" size={18} /> : "Scan"}
+                    {loading ? <Loader2 className="animate-spin" size={22} /> : "Scan URL"}
                   </button>
                 </div>
               </div>
@@ -172,35 +155,35 @@ const Dashboard = () => {
             {activeTab === 'text' && (
               <div className="space-y-4">
                 <textarea 
-                  rows="4"
+                  rows="5"
                   placeholder="Paste the suspicious message here..."
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none"
+                  className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none text-lg"
                   id="textInput"
                 />
                 <button 
                   onClick={() => analyzeText(document.getElementById('textInput').value)}
                   disabled={loading}
-                  className="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                  className="w-full py-4 bg-indigo-600 text-white font-bold text-lg rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors"
                 >
-                  {loading ? "Analyzing..." : "Analyze Content"}
+                  {loading ? "Analyzing Intent..." : "Analyze Content"}
                 </button>
               </div>
             )}
 
             {activeTab === 'email' && (
               <div className="space-y-4">
-                <div className="flex gap-2">
+                <div className="flex gap-4">
                   <input 
                     type="email" 
                     placeholder="user@example.com"
-                    className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
+                    className="flex-1 px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-lg"
                     id="emailInput"
                   />
                   <button 
                     onClick={() => checkEmail(document.getElementById('emailInput').value)}
-                    className="px-8 py-3 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-900 transition-colors"
+                    className="px-10 py-4 bg-slate-800 text-white font-bold text-lg rounded-xl hover:bg-slate-900 transition-colors"
                   >
-                    Check
+                    Check Database
                   </button>
                 </div>
               </div>
@@ -208,70 +191,71 @@ const Dashboard = () => {
           </div>
         </section>
 
+        {/* Results Section */}
         {results && (
-          <section className={`rounded-2xl border-l-8 p-6 shadow-sm bg-white animate-in slide-in-from-bottom-4 duration-300 ${
+          <section className={`rounded-2xl border-l-8 p-8 shadow-sm bg-white animate-in slide-in-from-bottom-4 duration-300 ${
             results.risk === 'HIGH' ? 'border-red-500' : results.risk === 'MEDIUM' ? 'border-amber-500' : 'border-green-500'
           }`}>
-            <div className="flex justify-between items-start mb-6">
+            <div className="flex justify-between items-start mb-8">
               <div>
-                <h3 className="text-xl font-bold flex items-center gap-2">
-                  {results.risk === 'HIGH' ? <ShieldAlert className="text-red-500" /> : <ShieldCheck className="text-green-500" />}
+                <h3 className="text-2xl font-bold flex items-center gap-3">
+                  {results.risk === 'HIGH' ? <ShieldAlert className="text-red-500" size={28}/> : <ShieldCheck className="text-green-500" size={28}/>}
                   Risk Level: <span className={results.risk === 'HIGH' ? 'text-red-600' : results.risk === 'MEDIUM' ? 'text-amber-600' : 'text-green-600'}>{results.risk}</span>
                 </h3>
-                <p className="text-sm text-slate-500">Classification based on {results.type} analysis engine.</p>
+                <p className="text-base text-slate-500 mt-2">Classification based on {results.type} analysis engine.</p>
               </div>
               {results.score !== undefined && (
-                <div className="text-right bg-slate-50 px-3 py-1 rounded-lg border border-slate-100">
-                  <div className="text-2xl font-black text-slate-800 leading-none">{results.score}</div>
-                  <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Score</div>
+                <div className="text-right bg-slate-50 px-5 py-3 rounded-xl border border-slate-100">
+                  <div className="text-3xl font-black text-slate-800 leading-none">{results.score}</div>
+                  <div className="text-xs uppercase font-bold text-slate-400 tracking-wider mt-1">Score</div>
                 </div>
               )}
             </div>
 
-            <div className="space-y-4">
-              <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
-                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1">
-                  <Info size={14} /> Diagnostic Findings
+            <div className="space-y-6">
+              <div className="bg-slate-50 rounded-xl p-6 border border-slate-100">
+                <h4 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <Info size={16} /> Diagnostic Findings
                 </h4>
-                <ul className="space-y-2">
+                <ul className="space-y-3">
                   {results.explanation.map((item, i) => (
-                    <li key={i} className="text-sm text-slate-700 flex items-start gap-2">
-                      <AlertTriangle size={16} className={`mt-0.5 shrink-0 ${results.risk === 'HIGH' ? 'text-red-400' : 'text-amber-400'}`} />
+                    <li key={i} className="text-base text-slate-700 flex items-start gap-3">
+                      <AlertTriangle size={18} className={`mt-0.5 shrink-0 ${results.risk === 'HIGH' ? 'text-red-400' : 'text-amber-400'}`} />
                       {item}
                     </li>
                   ))}
                 </ul>
               </div>
 
-              <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100 flex items-center gap-3">
-                <Zap size={20} className="text-indigo-500 shrink-0" />
+              <div className="bg-indigo-50 p-6 rounded-xl border border-indigo-100 flex items-center gap-4">
+                <Zap size={24} className="text-indigo-500 shrink-0" />
                 <div>
-                  <p className="text-xs font-bold text-indigo-400 uppercase tracking-widest">Recommendation</p>
-                  <p className="text-sm font-semibold text-indigo-900">{results.recommendation}</p>
+                  <p className="text-sm font-bold text-indigo-400 uppercase tracking-widest mb-1">Recommendation</p>
+                  <p className="text-lg font-semibold text-indigo-900">{results.recommendation}</p>
                 </div>
               </div>
             </div>
           </section>
         )}
 
-        {/* Sidebar content now placed vertically below main scanner */}
+        {/* Vertical Footer Sidebar Content */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-            <h3 className="font-bold flex items-center gap-2 mb-4 text-slate-800">
-              <History size={18} className="text-indigo-600" />
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+            <h3 className="text-lg font-bold flex items-center gap-2 mb-6 text-slate-800">
+              <History size={20} className="text-indigo-600" />
               Recent Scans
             </h3>
-            <div className="space-y-3">
+            <div className="space-y-4">
               {history.length === 0 ? (
-                <p className="text-sm text-slate-400 italic">No activity yet.</p>
+                <p className="text-base text-slate-400 italic">No activity yet.</p>
               ) : (
                 history.map((item, i) => (
-                  <div key={i} className="flex items-center justify-between p-2 hover:bg-slate-50 rounded-lg transition-all border-b border-slate-50 last:border-0">
+                  <div key={i} className="flex items-center justify-between p-3 hover:bg-slate-50 rounded-xl transition-all border-b border-slate-50 last:border-0">
                     <div className="min-w-0 flex-1">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase">{item.type}</p>
-                      <p className="text-xs font-medium text-slate-700 truncate pr-2">{item.input}</p>
+                      <p className="text-xs font-bold text-slate-400 uppercase mb-1">{item.type}</p>
+                      <p className="text-sm font-medium text-slate-700 truncate pr-4">{item.input}</p>
                     </div>
-                    <div className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
+                    <div className={`text-xs font-bold px-3 py-1 rounded-md uppercase ${
                       item.risk === 'HIGH' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'
                     }`}>
                       {item.risk}
@@ -282,35 +266,35 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <div className="bg-slate-900 text-white rounded-2xl shadow-xl p-6 relative overflow-hidden">
+          <div className="bg-slate-900 text-white rounded-2xl shadow-xl p-8 relative overflow-hidden">
             <div className="relative z-10">
-              <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+              <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
                 <Lock size={20} className="text-indigo-400" />
                 Security Hub
               </h3>
-              <div className="space-y-4">
-                <div className="flex gap-3">
-                  <div className="bg-slate-800 p-2 rounded-lg h-fit">
-                    <Eye size={16} className="text-indigo-300" />
+              <div className="space-y-6">
+                <div className="flex gap-4">
+                  <div className="bg-slate-800 p-3 rounded-xl h-fit">
+                    <Eye size={20} className="text-indigo-300" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-tight text-indigo-300">Validation First</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">Always verify the sender's identity through official channels before acting.</p>
+                    <p className="text-sm font-bold uppercase tracking-tight text-indigo-300">Validation First</p>
+                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">Always verify the sender's identity through official channels before acting.</p>
                   </div>
                 </div>
-                <div className="flex gap-3">
-                  <div className="bg-slate-800 p-2 rounded-lg h-fit">
-                    <ShieldCheck size={16} className="text-indigo-300" />
+                <div className="flex gap-4">
+                  <div className="bg-slate-800 p-3 rounded-xl h-fit">
+                    <ShieldCheck size={20} className="text-indigo-300" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-tight text-indigo-300">Encrypted Scans</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">All inputs are processed through secure heuristic layers for privacy.</p>
+                    <p className="text-sm font-bold uppercase tracking-tight text-indigo-300">Encrypted Scans</p>
+                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">All inputs are processed through secure heuristic layers for privacy.</p>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="absolute -bottom-8 -right-8 opacity-10">
-                <ShieldCheck size={160} />
+            <div className="absolute -bottom-12 -right-12 opacity-10">
+                <ShieldCheck size={200} />
             </div>
           </div>
         </div>
