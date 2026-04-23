@@ -1,26 +1,16 @@
 import  { useState } from 'react';
-import { 
-  ShieldCheck, 
-  ShieldAlert, 
-  ShieldQuestion,    
-  AlertTriangle,
-  ChevronRight,
-  Info,
-  History,
-  Lock,
-  Eye,
-  Zap,
-  Loader2
-} from 'lucide-react';
 import ScannerTab from '../components/scanner/ScannerTabs';
 import UrlScanner from '../components/scanner/URLScanner';
 import TextScanner from '../components/scanner/TextScanner';
 import EmailScanner from '../components/scanner/EmailScanner';
+import ResultsCard from '../components/results/ResultsCard';
+import RecentScans from '../components/widgets/RecentScans';
+import SecurityHub from '../components/widgets/SecurityHub';
 
 const MOCK_BREACHES = {
   "test@gmail.com": ["LinkedIn (2016)", "Adobe (2013)", "MySpace (2008)"],
   "admin@company.com": ["Canva (2019)", "Dropbox (2012)"],
-  "user@example.com": ["Wattpad", "Zomato"]
+  "user@example.com": ["Vercel", "SupaBase"]
 };
 
 const HEURISTIC_KEYWORDS = {
@@ -142,111 +132,13 @@ const Dashboard = () => {
         </section>
 
         {/* Results Section */}
-        {results && (
-          <section className={`rounded-2xl border-l-8 p-8 shadow-sm bg-white animate-in slide-in-from-bottom-4 duration-300 ${
-            results.risk === 'HIGH' ? 'border-red-500' : results.risk === 'MEDIUM' ? 'border-amber-500' : 'border-green-500'
-          }`}>
-            <div className="flex justify-between items-start mb-8">
-              <div>
-                <h3 className="text-2xl font-bold flex items-center gap-3">
-                  {results.risk === 'HIGH' ? <ShieldAlert className="text-red-500" size={28}/> : <ShieldCheck className="text-green-500" size={28}/>}
-                  Risk Level: <span className={results.risk === 'HIGH' ? 'text-red-600' : results.risk === 'MEDIUM' ? 'text-amber-600' : 'text-green-600'}>{results.risk}</span>
-                </h3>
-                <p className="text-base text-slate-500 mt-2">Classification based on {results.type} analysis engine.</p>
-              </div>
-              {results.score !== undefined && (
-                <div className="text-right bg-slate-50 px-5 py-3 rounded-xl border border-slate-100">
-                  <div className="text-3xl font-black text-slate-800 leading-none">{results.score}</div>
-                  <div className="text-xs uppercase font-bold text-slate-400 tracking-wider mt-1">Score</div>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-6">
-              <div className="bg-slate-50 rounded-xl p-6 border border-slate-100">
-                <h4 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                  <Info size={16} /> Diagnostic Findings
-                </h4>
-                <ul className="space-y-3">
-                  {results.explanation.map((item, i) => (
-                    <li key={i} className="text-base text-slate-700 flex items-start gap-3">
-                      <AlertTriangle size={18} className={`mt-0.5 shrink-0 ${results.risk === 'HIGH' ? 'text-red-400' : 'text-amber-400'}`} />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="bg-indigo-50 p-6 rounded-xl border border-indigo-100 flex items-center gap-4">
-                <Zap size={24} className="text-indigo-500 shrink-0" />
-                <div>
-                  <p className="text-sm font-bold text-indigo-400 uppercase tracking-widest mb-1">Recommendation</p>
-                  <p className="text-lg font-semibold text-indigo-900">{results.recommendation}</p>
-                </div>
-              </div>
-            </div>
-          </section>
-        )}
+        <ResultsCard results={results} />        
 
         {/* Vertical Footer Sidebar Content */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
-            <h3 className="text-lg font-bold flex items-center gap-2 mb-6 text-slate-800">
-              <History size={20} className="text-indigo-600" />
-              Recent Scans
-            </h3>
-            <div className="space-y-4">
-              {history.length === 0 ? (
-                <p className="text-base text-slate-400 italic">No activity yet.</p>
-              ) : (
-                history.map((item, i) => (
-                  <div key={i} className="flex items-center justify-between p-3 hover:bg-slate-50 rounded-xl transition-all border-b border-slate-50 last:border-0">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold text-slate-400 uppercase mb-1">{item.type}</p>
-                      <p className="text-sm font-medium text-slate-700 truncate pr-4">{item.input}</p>
-                    </div>
-                    <div className={`text-xs font-bold px-3 py-1 rounded-md uppercase ${
-                      item.risk === 'HIGH' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'
-                    }`}>
-                      {item.risk}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+          <RecentScans history={history} />
 
-          <div className="bg-slate-900 text-white rounded-2xl shadow-xl p-8 relative overflow-hidden">
-            <div className="relative z-10">
-              <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
-                <Lock size={20} className="text-indigo-400" />
-                Security Hub
-              </h3>
-              <div className="space-y-6">
-                <div className="flex gap-4">
-                  <div className="bg-slate-800 p-3 rounded-xl h-fit">
-                    <Eye size={20} className="text-indigo-300" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold uppercase tracking-tight text-indigo-300">Validation First</p>
-                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">Always verify the sender's identity through official channels before acting.</p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="bg-slate-800 p-3 rounded-xl h-fit">
-                    <ShieldCheck size={20} className="text-indigo-300" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold uppercase tracking-tight text-indigo-300">Encrypted Scans</p>
-                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">All inputs are processed through secure heuristic layers for privacy.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="absolute -bottom-12 -right-12 opacity-10">
-                <ShieldCheck size={200} />
-            </div>
-          </div>
+          <SecurityHub />
         </div>
       </div>
     </div>
