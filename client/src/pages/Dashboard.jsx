@@ -13,6 +13,9 @@ import {
   Loader2
 } from 'lucide-react';
 import ScannerTab from '../components/scanner/ScannerTabs';
+import UrlScanner from '../components/scanner/URLScanner';
+import TextScanner from '../components/scanner/TextScanner';
+import EmailScanner from '../components/scanner/EmailScanner';
 
 const MOCK_BREACHES = {
   "test@gmail.com": ["LinkedIn (2016)", "Adobe (2013)", "MySpace (2008)"],
@@ -132,62 +135,9 @@ const Dashboard = () => {
            <ScannerTab activeTab={activeTab} onTabChange={(tab) => { setActiveTab(tab); setResults(null); }} />
 
           <div className="p-8">
-            {activeTab === 'url' && (
-              <div className="space-y-4">
-                <div className="flex gap-4">
-                  <input 
-                    type="text" 
-                    placeholder="https://g00gle-security.com"
-                    className="flex-1 px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-lg"
-                    id="urlInput"
-                  />
-                  <button 
-                    onClick={() => analyzeURL(document.getElementById('urlInput').value)}
-                    disabled={loading}
-                    className="px-10 py-4 bg-indigo-600 text-white font-bold text-lg rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center gap-2"
-                  >
-                    {loading ? <Loader2 className="animate-spin" size={22} /> : "Scan URL"}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'text' && (
-              <div className="space-y-4">
-                <textarea 
-                  rows="5"
-                  placeholder="Paste the suspicious message here..."
-                  className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none text-lg"
-                  id="textInput"
-                />
-                <button 
-                  onClick={() => analyzeText(document.getElementById('textInput').value)}
-                  disabled={loading}
-                  className="w-full py-4 bg-indigo-600 text-white font-bold text-lg rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-                >
-                  {loading ? "Analyzing Intent..." : "Analyze Content"}
-                </button>
-              </div>
-            )}
-
-            {activeTab === 'email' && (
-              <div className="space-y-4">
-                <div className="flex gap-4">
-                  <input 
-                    type="email" 
-                    placeholder="user@example.com"
-                    className="flex-1 px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-lg"
-                    id="emailInput"
-                  />
-                  <button 
-                    onClick={() => checkEmail(document.getElementById('emailInput').value)}
-                    className="px-10 py-4 bg-slate-800 text-white font-bold text-lg rounded-xl hover:bg-slate-900 transition-colors"
-                  >
-                    Check Database
-                  </button>
-                </div>
-              </div>
-            )}
+             <UrlScanner activeTab={activeTab} loading={loading} analyzeURL={analyzeURL} />
+            <TextScanner activeTab={activeTab} loading={loading} analyzeText={analyzeText} />
+            <EmailScanner activeTab={activeTab} checkEmail={checkEmail}/>
           </div>
         </section>
 
