@@ -9,8 +9,8 @@ const UrlScanner = ({ onScan, isLoading }) => {
     const trimmedInput = inputValue.trim();
     if (!trimmedInput) return;
 
-    // Basic URL regex (forgiving but requires a domain structure)
-    const urlPattern = /^(https?:\/\/)?([\w.-]+)\.([a-z]{2,})(\/\S*)?$/i;
+   // Improved Regex: Allows standard domains OR IP addresses, prevents spaces
+    const urlPattern = /^(https?:\/\/)?([^\s.]+\.[^\s]+)/i;
     
     if (!urlPattern.test(trimmedInput)) {
       setError('Please enter a valid URL (e.g., example.com or https://example.com)');
