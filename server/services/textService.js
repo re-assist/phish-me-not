@@ -1,10 +1,11 @@
 const axios = require('axios');
 
 const HEURISTIC_KEYWORDS = {
-  urgent: ["urgent", "immediately", "action required", "suspended", "blocked"],
+  urgent: ["urgent", "immediately", "action required", "suspended", "blocked","limited time","click here","download now"],
   authority: ["bank", "security", "official", "government", "police", "tax"],
   sensitive: ["otp", "password", "pin", "verify", "login", "credentials"],
-  threat: ["legal action", "arrest", "lawsuit", "deleted", "expired"]
+    threat: ["legal action", "arrest", "lawsuit", "deleted", "expired"],
+  incentive: ["prize", "offer", "claim", "lottery", "award", "credit", "avail", "winner", "gift","win","chance"]
 };
 
 // Switching back to the specialized SMS Spam fine-tuned model using the stable router endpoint

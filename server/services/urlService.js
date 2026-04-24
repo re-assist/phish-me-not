@@ -1,89 +1,133 @@
 const axios = require('axios');
 
-// --- CACHE CONFIGURATION ---
+// In-memory cache for OpenPhish live feed
 let openPhishCache = new Set();
 let lastFetchTime = 0;
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
-const OPENPHISH_URL = "https://raw.githubusercontent.com/openphish/public_feed/refs/heads/main/feed.txt";
 
-const fetchOpenPhishFeed = async () => {
+const PROTECTED_BRANDS = [
+    "google", "microsoft", "apple", "amazon", "paypal", 
+    "netflix", "facebook", "instagram", "chase", "bankofamerica"
+];
+
+// Levenshtein Distance Algorithm (calculates character edits between two strings)
+const getEditDistance = (a, b) => {
+    if (a.length === 0) return b.length;
+    if (b.length === 0) return a.length;
+
+    const matrix = [];
+    for (let i = 0; i <= b.length; i++) { matrix[i] = [i]; }
+    for (let j = 0; j <= a.length; j++) { matrix[0][j] = j; }
+
+    for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
+            if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j - 1] + 1, // substitution
+                    matrix[i][j - 1] + 1,     // insertion
+                    matrix[i - 1][j] + 1      // deletion
+                );
+            }
+        }
+    }
+    return matrix[b.length][a.length];
+};
+
+const refreshOpenPhishCache = async () => {
     const now = Date.now();
-    
-    // Return cached data if it's still fresh
-    if (openPhishCache.size > 0 && (now - lastFetchTime < CACHE_TTL)) {
-        return;
+    if (now - lastFetchTime < CACHE_TTL && openPhishCache.size > 0) {
+        return; 
     }
 
     try {
-        console.log("[OpenPhish] Fetching fresh threat feed...");
-        const response = await axios.get(OPENPHISH_URL);
+        console.log("[OpenPhish] Fetching latest threat feed...");
+        const response = await axios.get('https://raw.githubusercontent.com/openphish/public_feed/refs/heads/main/feed.txt', { timeout: 10000 });
+        const urls = response.data.split('\n').filter(url => url.trim() !== '');
         
-        // Split text by newlines, trim whitespace, and ignore empty lines
-        const urls = response.data.split('\n').map(url => url.trim()).filter(url => url.length > 0);
-        
-        openPhishCache = new Set(urls);
+        openPhishCache.clear();
+        urls.forEach(url => openPhishCache.add(url.trim().toLowerCase()));
         lastFetchTime = now;
-        
-        console.log(`[OpenPhish] Successfully cached ${openPhishCache.size} known phishing URLs.`);
+        console.log(`[OpenPhish] Cache updated with ${openPhishCache.size} active threats.`);
     } catch (error) {
-        console.error("[OpenPhish] Failed to fetch feed:", error.message);
+        console.error("[OpenPhish] Failed to update cache:", error.message);
     }
 };
 
-const analyzeURL = async (url) => {
-    if (!url) throw new Error("URL is required");
+const analyzeURL = async (rawUrl) => {
+    if (!rawUrl) throw new Error("URL is required");
 
-    await fetchOpenPhishFeed();
+    await refreshOpenPhishCache();
 
     let score = 0;
     const flags = [];
-    const lowerUrl = url.toLowerCase();
+    let normalizedUrl = rawUrl.trim().toLowerCase();
 
-    // SMART MATCHING: Check exact, lowercase, and with/without trailing slashes
-    const urlWithSlash = lowerUrl.endsWith('/') ? lowerUrl : `${lowerUrl}/`;
-    const urlWithoutSlash = lowerUrl.endsWith('/') ? lowerUrl.slice(0, -1) : lowerUrl;
-
-    // 1. OPENPHISH CHECK (Immediate High Risk)
-    if (
-        openPhishCache.has(url) || 
-        openPhishCache.has(lowerUrl) || 
-        openPhishCache.has(urlWithSlash) || 
-        openPhishCache.has(urlWithoutSlash)
-    ) {
-        score += 100;
-        flags.push("CRITICAL: URL matches known active threat in OpenPhish database.");
+    // 1. OPENPHISH OSINT CHECK
+    if (openPhishCache.has(normalizedUrl) || openPhishCache.has(normalizedUrl + '/')) {
+        return {
+            type: 'URL',
+            input: rawUrl,
+            risk: "HIGH",
+            score: 100,
+            explanation: ["CRITICAL: URL matches an active threat in the OpenPhish database."],
+            recommendation: "Close the page immediately. Do not interact."
+        };
     }
 
-    // 2. HEURISTIC CHECKS
-    if (url.length > 75) {
-        score += 20;
-        flags.push("Unusually long URL (often used to hide actual domain).");
+    // 2. DOMAIN EXTRACTION FOR HEURISTICS
+    let hostname = "";
+    try {
+        const parsedUrl = new URL(normalizedUrl.startsWith('http') ? normalizedUrl : `http://${normalizedUrl}`);
+        hostname = parsedUrl.hostname;
+    } catch (e) {
+        hostname = normalizedUrl; // Fallback if parsing fails
     }
-    if (/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/.test(url)) {
-        score += 40;
-        flags.push("IP-based URL detected (legitimate sites use domains).");
-    }
-    
-    const brandCheck = ["google", "paypal", "microsoft", "apple", "amazon", "netflix"];
-    brandCheck.forEach(brand => {
-        if (lowerUrl.includes(brand) && !url.includes(`${brand}.com`) && !url.includes(`${brand}.org`)) {
-            score += 35;
-            flags.push(`Suspicious use of '${brand}' in non-official domain string.`);
+
+    // 3. TYPOSQUATTING & HOMOGRAPH DETECTION
+    // Strip subdomains/tlds (e.g., "www.rnicrosoft.com" -> "rnicrosoft")
+    const domainParts = hostname.replace('www.', '').split('.');
+    const mainDomain = domainParts.length > 1 ? domainParts[domainParts.length - 2] : domainParts[0];
+
+    for (const brand of PROTECTED_BRANDS) {
+        // Exact match usually implies a sub-page or deep link (handled safely by openphish ideally)
+        if (mainDomain === brand) continue; 
+
+        const distance = getEditDistance(mainDomain, brand);
+        
+        // If distance is 1 (e.g., go0gle, paypal1) OR if distance is 2 for longer strings (rnicrosoft)
+        if (distance === 1 || (distance === 2 && mainDomain.length >= 6)) {
+            score += 60;
+            flags.push(`IMPERSONATION ALERT: Domain "${mainDomain}" is highly similar to protected brand "${brand}". This is likely Typosquatting.`);
+            break; // Stop after first major match
         }
-    });
+    }
 
-    // 3. RISK CALCULATION
-    const risk = score >= 60 ? "HIGH" : score >= 30 ? "MEDIUM" : "LOW";
+    // 4. BASIC HEURISTICS
+    if (normalizedUrl.length > 75) {
+        score += 20;
+        flags.push("HEURISTIC: Unusually long URL (often used to obscure the actual domain).");
+    }
+
+    const ipRegex = /\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b/;
+    if (ipRegex.test(hostname)) {
+        score += 40;
+        flags.push("HEURISTIC: URL uses a raw IP address instead of a domain name.");
+    }
+
+    // 5. RISK CALCULATION
+    const finalScore = Math.min(score, 100);
+    const risk = finalScore >= 60 ? "HIGH" : finalScore >= 30 ? "MEDIUM" : "LOW";
 
     return {
         type: 'URL',
-        input: url,
+        input: rawUrl,
         risk,
-        score: Math.min(score, 100), // Cap score at 100
-        explanation: flags.length > 0 ? flags : ["No immediate heuristic red flags detected."],
-        recommendation: risk === "HIGH" ? "Do not click. Report this link immediately." : "Proceed with caution."
+        score: finalScore,
+        explanation: flags.length > 0 ? flags : ["No known threat signatures detected."],
+        recommendation: risk === "HIGH" ? "Do not visit this URL. It is highly suspicious." : "Proceed with caution."
     };
 };
 
-// CRITICAL: This line must exist to make the function accessible to routes/url.js
 module.exports = { analyzeURL };
