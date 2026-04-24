@@ -1,28 +1,53 @@
+import React, { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 
-const UrlScanner = ({activeTab, loading, analyzeURL}) => {
-    return (
-        activeTab === 'url' && (
-              <div className="space-y-4">
-                <div className="flex gap-4">
-                  <input 
-                    type="text" 
-                    placeholder="https://google-security123.com"
-                    className="flex-1 px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-lg"
-                    id="urlInput"
-                  />
-                  <button 
-                    onClick={() => analyzeURL(document.getElementById('urlInput').value)}
-                    disabled={loading}
-                    className="px-10 py-4 bg-indigo-600 text-white font-bold text-lg rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center gap-2"
-                  >
-                    {loading ? <Loader2 className="animate-spin" size={22} /> : "Scan URL"}
-                  </button>
-                </div>
-              </div>
-            )
+const UrlScanner = ({ onScan, isLoading }) => {
+  const [inputValue, setInputValue] = useState('');
+  const [error, setError] = useState('');
 
-    );
-}
+  const handleScanClick = () => {
+    const trimmedInput = inputValue.trim();
+    if (!trimmedInput) return;
+
+   // Improved Regex: Allows standard domains OR IP addresses, prevents spaces
+    const urlPattern = /^(https?:\/\/)?([^\s.]+\.[^\s]+)/i;
+    
+    if (!urlPattern.test(trimmedInput)) {
+      setError('Please enter a valid URL (e.g., example.com or https://example.com)');
+      return;
+    }
+
+    onScan(trimmedInput);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-4">
+        <div className="flex-1">
+          <input 
+            type="text" 
+            value={inputValue}
+            onChange={(e) => {
+              setInputValue(e.target.value);
+              if (error) setError(''); // Clear error when user types
+            }}
+            placeholder="https://phishing-site.com"
+            className={`w-full px-5 py-4 bg-slate-50 border rounded-xl focus:outline-none transition-all text-lg ${
+              error ? 'border-red-400 focus:ring-2 focus:ring-red-400' : 'border-slate-200 focus:ring-2 focus:ring-indigo-500'
+            }`}
+          />
+          {error && <p className="text-red-500 text-sm font-medium mt-2 ml-1">{error}</p>}
+        </div>
+        <button 
+          onClick={handleScanClick}
+          disabled={isLoading || !inputValue.trim()}
+          className="h-15 px-10 bg-indigo-600 text-white font-bold text-lg rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+        >
+          {isLoading ? <Loader2 className="animate-spin" size={22} /> : "Scan URL"}
+        </button>
+      </div>
+    </div>
+  );
+};
 
 export default UrlScanner;
