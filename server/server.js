@@ -1,8 +1,9 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 
 const urlRoutes = require('./routes/url');
-// const textRoutes = require('./routes/text'); // Un-comment later
+ const textRoutes = require('./routes/text'); 
 // const emailRoutes = require('./routes/email'); // Un-comment later
 
 const app = express();
@@ -14,7 +15,7 @@ app.use(express.json()); // Allows Express to parse JSON bodies
 
 // Routes
 app.use('/api/scan/url', urlRoutes);
-// app.use('/api/scan/text', textRoutes);
+ app.use('/api/scan/text', textRoutes);
 // app.use('/api/scan/email', emailRoutes);
 
 // Health Check
