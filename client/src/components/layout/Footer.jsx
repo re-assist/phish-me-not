@@ -22,7 +22,7 @@ const Footer = () => {
             Phising URL Detection API
                 </a>
                 <a
-            href="https://huggingface.co/MrTher/scam_detector"
+            href="https://huggingface.co/phishbot/ScamLLM"
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-indigo-600 transition-colors  tracking-wider text-xs"
