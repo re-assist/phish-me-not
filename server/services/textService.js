@@ -8,7 +8,7 @@ const HEURISTIC_KEYWORDS = {
   incentive: ["prize", "offer", "claim", "lottery", "award", "credit", "avail", "winner", "gift","win","chance"]
 };
 
-const HF_API_URL = "https://router.huggingface.co/hf-inference/models/mrm8488/bert-tiny-finetuned-sms-spam-detection";
+const HF_API_URL = "https://router.huggingface.co/hf-inference/models/phishbot/ScamLLM";
 
 const analyzeTextContent = async (text) => {
     if (!text) throw new Error("Text is required");
@@ -42,7 +42,7 @@ const analyzeTextContent = async (text) => {
                     "Authorization": `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
                     "Content-Type": "application/json"
                 },
-                timeout: 15000 
+                timeout: 60000 
             }
         );
 
