@@ -82,7 +82,15 @@ const analyzeTextContent = async (text) => {
         risk,
         score: finalScore,
         explanation: flags.length > 0 ? flags : ["No suspicious linguistic patterns detected."],
-        recommendation: risk === "HIGH" ? "Do not reply or click any links. Delete immediately." : "Verify sender identity if unsure."
+        recommendation: risk === "HIGH" ? [
+            "Do not reply. Replying confirms your number is active to scammers.",
+            "Block the sender immediately on your device.",
+            "Delete the message to prevent accidental link clicks later."
+        ] : [
+            "Do not click any embedded links or call provided numbers.",
+            "Verify the claim through official channels (e.g., call the bank directly).",
+            "Monitor your accounts for unusual activity."
+        ]
     };
 };
 

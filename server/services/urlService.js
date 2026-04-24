@@ -126,7 +126,15 @@ const analyzeURL = async (rawUrl) => {
         risk,
         score: finalScore,
         explanation: flags.length > 0 ? flags : ["No known threat signatures detected."],
-        recommendation: risk === "HIGH" ? "Do not visit this URL. It is highly suspicious." : "Proceed with caution."
+        recommendation: risk === "HIGH" ? [
+            "Close this browser tab immediately.",
+            "Do not enter any credentials or download any files.",
+            "Run a quick antivirus scan if you clicked anything on the page."
+        ] : [
+            "Verify the sender who provided this link.",
+            "Ensure the website has a valid HTTPS certificate.",
+            "If in doubt, manually type the brand's official URL in a new tab."
+        ]
     };
 };
 

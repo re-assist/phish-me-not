@@ -56,7 +56,15 @@ const checkEmailBreach = async (email) => {
         risk,
         score,
         explanation: flags.length > 0 ? flags : ["No known leaks found."],
-        recommendation
+        recommendation: risk === "HIGH" ? [
+            "Change passwords for the compromised accounts immediately.",
+            "Enable Two-Factor Authentication (2FA) across all your accounts.",
+            "Use a password manager to generate and store unique passwords."
+        ] : [
+            "Maintain good security hygiene by updating passwords regularly.",
+            "Enable 2FA where possible to prevent future unauthorized access.",
+            "Monitor your email for targeted phishing attempts."
+        ]
     };
 };
 

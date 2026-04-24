@@ -67,11 +67,21 @@ const ResultsCard = ({ results }) => {
         </div>
 
         {/* High-Contrast Recommendation Section */}
-        <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 flex items-center gap-4 shadow-lg">
-          <Zap size={28} className={results.risk === 'HIGH' ? 'text-red-400' : results.risk === 'MEDIUM' ? 'text-amber-400' : 'text-green-400'} shrink-0 />
-          <div>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Recommended Action</p>
-            <p className="text-xl font-bold text-white tracking-wide">{results.recommendation}</p>
+        {/* CHANGED: items-center to items-start so the icon aligns with the top of the list */}
+        <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 flex items-start gap-4 shadow-lg">
+          <Zap size={28} className={`mt-1 shrink-0 ${results.risk === 'HIGH' ? 'text-red-400' : results.risk === 'MEDIUM' ? 'text-amber-400' : 'text-green-400'}`} />
+          <div className="w-full">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Recommended Action</p>
+            {/* CHANGED: Removed redundant <h4>, removed mt-4, increased text size and weight */}
+            <ul className="list-disc pl-5 space-y-2">
+                {Array.isArray(results.recommendation) ? (
+                    results.recommendation.map((rec, index) => (
+                        <li key={index} className="text-white font-bold text-lg">{rec}</li>
+                    ))
+                ) : (
+                    <li className="text-white font-bold text-lg">{results.recommendation}</li>
+                )}
+            </ul>
           </div>
         </div>
         
