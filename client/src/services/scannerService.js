@@ -6,7 +6,7 @@
  */
 
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://phish-me-not-api.onrender.com/api';
 
 /**
  * Sends the URL to the Express backend for analysis against OpenPhish and server-side heuristics.
