@@ -1,14 +1,13 @@
 const axios = require('axios');
 
 const HEURISTIC_KEYWORDS = {
-  urgent: ["urgent", "immediately", "action required", "suspended", "blocked","limited time","click here","download now"],
+  urgent: ["urgent", "immediately", "action required", "suspended", "blocked"],
   authority: ["bank", "security", "official", "government", "police", "tax"],
   sensitive: ["otp", "password", "pin", "verify", "login", "credentials"],
-    threat: ["legal action", "arrest", "lawsuit", "deleted", "expired"],
-  incentive: ["prize", "offer", "claim", "lottery", "award", "credit", "avail", "winner", "gift","win","chance"]
+  threat: ["legal action", "arrest", "lawsuit", "deleted", "expired"],
+  incentive: ["prize", "offer", "claim", "lottery", "award", "credit", "avail", "winner", "gift"]
 };
 
-// Switching back to the specialized SMS Spam fine-tuned model using the stable router endpoint
 const HF_API_URL = "https://router.huggingface.co/hf-inference/models/mrm8488/bert-tiny-finetuned-sms-spam-detection";
 
 const analyzeTextContent = async (text) => {
@@ -18,21 +17,26 @@ const analyzeTextContent = async (text) => {
     const flags = [];
     const lowerText = text.toLowerCase();
 
-    // 1. LOCAL HEURISTICS
+    // 1. LOCAL HEURISTICS (Bounded Additive Scoring)
+    let heuristicScore = 0;
     Object.entries(HEURISTIC_KEYWORDS).forEach(([category, words]) => {
         const matches = words.filter(word => lowerText.includes(word));
         if (matches.length > 0) {
-            score += 20; 
-            flags.push(`${category.toUpperCase()}: Detected suspicious keywords ("${matches[0]}").`);
+            heuristicScore += (20 * matches.length); 
+            const matchedWordsString = matches.join(', ');
+            flags.push(`${category.toUpperCase()}: Detected ${matches.length} suspicious keyword(s) ("${matchedWordsString}").`);
         }
     });
+
+    // Cap heuristics at 40. This prevents "keyword stuffing" from reaching the HIGH (60+) threshold without AI verification.
+    score += Math.min(heuristicScore, 40);
 
     // 2. HUGGING FACE AI ANALYSIS
     try {
         console.log("[AI] Requesting classification from Hugging Face...");
         const response = await axios.post(
             HF_API_URL,
-            { inputs: text }, // Fine-tuned models just take raw text inputs
+            { inputs: text },
             {
                 headers: {
                     "Authorization": `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
@@ -43,16 +47,12 @@ const analyzeTextContent = async (text) => {
         );
 
         const data = response.data;
-        
-        // HF Text Classification models typically return an array of arrays: [[{label, score}, {label, score}]]
         const predictions = (Array.isArray(data) && Array.isArray(data[0])) ? data[0] : (Array.isArray(data) ? data : []);
 
         if (predictions.length > 0) {
-            // LABEL_1 is Spam/Phishing in this specific model. LABEL_0 is Safe/Ham.
             const spamPrediction = predictions.find(p => p.label === 'LABEL_1' || p.label === 'spam');
             const safePrediction = predictions.find(p => p.label === 'LABEL_0' || p.label === 'ham');
 
-            // We use > 0.5 because fine-tuned binary classifiers are highly decisive
             if (spamPrediction && spamPrediction.score > 0.5) {
                 const aiRiskBoost = Math.round(spamPrediction.score * 60); 
                 score += aiRiskBoost;
