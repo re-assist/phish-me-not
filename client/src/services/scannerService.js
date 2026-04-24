@@ -5,20 +5,6 @@
  * before testing the URL scanner.
  */
 
-// We keep the mock data here for the Text and Email scanners 
-// until we build backend routes for them.
-const MOCK_BREACHES = {
-  "test@gmail.com": ["LinkedIn (2016)", "Adobe (2013)", "MySpace (2008)"],
-  "admin@company.com": ["Canva (2019)", "Dropbox (2012)"],
-  "user@example.com": ["Vercel", "SupaBase"]
-};
-
-const HEURISTIC_KEYWORDS = {
-  urgent: ["urgent", "immediately", "action required", "suspended", "blocked"],
-  authority: ["bank", "security", "official", "government", "police", "tax"],
-  sensitive: ["otp", "password", "pin", "verify", "login", "credentials"],
-  threat: ["legal action", "arrest", "lawsuit", "deleted", "expired"]
-};
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -58,51 +44,54 @@ export const analyzeURL = async (url) => {
 };
 
 /**
- * Local heuristic analysis for text (will move to backend later)
+ * Sends the text to the Express backend for AI classification and heuristic scanning.
  */
 export const analyzeTextContent = async (text) => {
   if (!text) throw new Error("Text is required");
-  await new Promise(r => setTimeout(r, 1200));
 
-  let score = 0;
-  const detectedPatterns = [];
-  const lowerText = text.toLowerCase();
+  try {
+    const response = await fetch(`${API_BASE_URL}/scan/text`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    });
 
-  Object.entries(HEURISTIC_KEYWORDS).forEach(([category, words]) => {
-    const matches = words.filter(word => lowerText.includes(word));
-    if (matches.length > 0) {
-      score += 25;
-      detectedPatterns.push(`${category.toUpperCase()}: Found keywords like "${matches[0]}"`);
+    if (!response.ok) {
+      throw new Error(`Server responded with status: ${response.status}`);
     }
-  });
 
-  const risk = score > 50 ? "HIGH" : score >= 25 ? "MEDIUM" : "LOW";
-
-  return {
-    type: 'Text',
-    input: text.substring(0, 40) + "...",
-    risk,
-    score,
-    explanation: detectedPatterns.length > 0 ? detectedPatterns : ["No suspicious linguistic patterns detected."],
-    recommendation: risk === "HIGH" ? "Likely a phishing attempt. Ignore and block." : "Verify via secondary channels."
-  };
+    return await response.json();
+  } catch (error) {
+    console.error("Error communicating with backend:", error);
+    return {
+      type: 'Text/SMS',
+      input: text.substring(0, 40) + "...",
+      risk: 'ERROR',
+      score: 0,
+      explanation: ["Failed to reach the AI analysis server.", error.message],
+      recommendation: "Please ensure the backend server is running."
+    };
+  }
 };
 
-/**
- * Local mock lookup for email breaches (will move to backend later)
- */
 export const checkEmailBreach = async (email) => {
   if (!email) throw new Error("Email is required");
-  await new Promise(r => setTimeout(r, 500)); 
-  
-  const breaches = MOCK_BREACHES[email.toLowerCase()] || [];
-  return {
-    type: 'Email',
-    input: email,
-    risk: breaches.length > 0 ? "HIGH" : "LOW",
-    explanation: breaches.length > 0 
-      ? [`Found in ${breaches.length} leaks:`, ...breaches]
-      : ["No known leaks found in this dataset."],
-    recommendation: breaches.length > 0 ? "Enable 2FA and change passwords." : "Maintain good security hygiene."
-  };
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/scan/email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+
+    if (!response.ok) throw new Error(`Server responded with status: ${response.status}`);
+    return await response.json();
+  } catch (error) {
+    console.error("Error communicating with backend:", error);
+    return {
+      type: 'Email', input: email, risk: 'ERROR', score: 0,
+      explanation: ["Failed to reach the breach database server.", error.message],
+      recommendation: "Please ensure the backend server is running."
+    };
+  }
 };
