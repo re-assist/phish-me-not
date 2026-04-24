@@ -1,11 +1,11 @@
 const axios = require('axios');
 
 const HEURISTIC_KEYWORDS = {
-  urgent: ["urgent", "immediately", "action required", "suspended", "blocked"],
+  urgent: ["urgent", "immediately", "action required", "suspended", "blocked","limited time","click here","download now"],
   authority: ["bank", "security", "official", "government", "police", "tax"],
   sensitive: ["otp", "password", "pin", "verify", "login", "credentials"],
   threat: ["legal action", "arrest", "lawsuit", "deleted", "expired"],
-  incentive: ["prize", "offer", "claim", "lottery", "award", "credit", "avail", "winner", "gift"]
+  incentive: ["prize", "offer", "claim", "lottery", "award", "credit", "avail", "winner", "gift","win","chance"]
 };
 
 const HF_API_URL = "https://router.huggingface.co/hf-inference/models/mrm8488/bert-tiny-finetuned-sms-spam-detection";
