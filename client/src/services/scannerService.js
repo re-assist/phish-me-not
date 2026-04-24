@@ -5,20 +5,6 @@
  * before testing the URL scanner.
  */
 
-// We keep the mock data here for the Text and Email scanners 
-// until we build backend routes for them.
-const MOCK_BREACHES = {
-  "test@gmail.com": ["LinkedIn (2016)", "Adobe (2013)", "MySpace (2008)"],
-  "admin@company.com": ["Canva (2019)", "Dropbox (2012)"],
-  "user@example.com": ["Vercel", "SupaBase"]
-};
-
-const HEURISTIC_KEYWORDS = {
-  urgent: ["urgent", "immediately", "action required", "suspended", "blocked"],
-  authority: ["bank", "security", "official", "government", "police", "tax"],
-  sensitive: ["otp", "password", "pin", "verify", "login", "credentials"],
-  threat: ["legal action", "arrest", "lawsuit", "deleted", "expired"]
-};
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -88,21 +74,24 @@ export const analyzeTextContent = async (text) => {
   }
 };
 
-/**
- * Local mock lookup for email breaches (will move to backend later)
- */
 export const checkEmailBreach = async (email) => {
   if (!email) throw new Error("Email is required");
-  await new Promise(r => setTimeout(r, 500)); 
-  
-  const breaches = MOCK_BREACHES[email.toLowerCase()] || [];
-  return {
-    type: 'Email',
-    input: email,
-    risk: breaches.length > 0 ? "HIGH" : "LOW",
-    explanation: breaches.length > 0 
-      ? [`Found in ${breaches.length} leaks:`, ...breaches]
-      : ["No known leaks found in this dataset."],
-    recommendation: breaches.length > 0 ? "Enable 2FA and change passwords." : "Maintain good security hygiene."
-  };
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/scan/email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+
+    if (!response.ok) throw new Error(`Server responded with status: ${response.status}`);
+    return await response.json();
+  } catch (error) {
+    console.error("Error communicating with backend:", error);
+    return {
+      type: 'Email', input: email, risk: 'ERROR', score: 0,
+      explanation: ["Failed to reach the breach database server.", error.message],
+      recommendation: "Please ensure the backend server is running."
+    };
+  }
 };
