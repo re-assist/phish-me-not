@@ -34,9 +34,15 @@ const checkEmailBreach = async (email) => {
             }
 
             recommendation = "Change your passwords immediately. Enable Two-Factor Authentication (2FA) on all accounts associated with this email.";
-        } else if (data.success && data.found === 0) {
+        } 
+        // FIX: Specifically handle the API's actual response for a clean email
+        else if (data.error === "Not found" || (data.success && data.found === 0)) {
             flags.push("SAFE: No known breaches found for this email address in the public database.");
-        } else {
+            risk = "LOW";
+            score = 0;
+        } 
+        // Catch actual rate limits or server errors from the API
+        else {
             console.warn("[LeakCheck] API returned unsuccessful response:", data);
             flags.push("SYSTEM WARNING: Could not verify breach status. The public API may be rate-limited.");
             risk = "MEDIUM"; 
