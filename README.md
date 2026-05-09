@@ -50,6 +50,7 @@ To bridge this gap, PhishMeNot unifies local regex-based heuristics, fine-tuned 
 ### External Services
 - OpenPhish (URL threat intelligence)
 - Hugging Face API (text classification model)
+- LeakCheck API ( Email Breach database)
 
 ---
 
